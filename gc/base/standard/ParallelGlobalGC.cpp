@@ -148,6 +148,35 @@ static void globalGCHookCCEnd(J9HookInterface** hook, uintptr_t eventNum, void* 
 static void globalGCHookSysStart(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
 static void globalGCHookSysEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
 
+void 
+MM_ParallelGlobalGC::compressPage (MM_EnvironmentBase *env, void* pageIterator, int pageNum, int PAGESIZE) {
+	//MM_GCExtensionsBase *_extensions = env->getExtensions();
+	J9JavaVM *_extensions = ((J9VMThread *) env)->javaVM;
+
+	if (true) { // check if page is compressible
+		*((bool*)(_extensions->metadataTable) + pageNum) = true;
+		*((uintptr_t*)(_extensions->addressTable) + pageNum) = (uintptr_t)pageIterator;
+	} 
+	else {
+		*((bool*)(_extensions->metadataTable) + pageNum) = false;
+
+	}	
+}
+
+void 
+MM_ParallelGlobalGC::compressHeap(MM_EnvironmentBase *env){
+	//MM_GCExtensionsBase *_extensions = env->getExtensions();
+	J9JavaVM *_vm = ((J9VMThread *) env)->javaVM;
+	void* tenureBase = _extensions->_tenureBase;
+	uintptr_t tenureSize = _extensions->_tenureSize;
+	_vm->gcHappened = true;
+	int pageNum = 0;
+	
+	for (int* pageIterator = (int*) tenureBase; ((uintptr_t)pageIterator - (uintptr_t)tenureBase) < tenureSize; pageIterator += _vm->PAGESIZE) {
+		pageNum ++;
+		compressPage (env, (void*)pageIterator, pageNum, _vm->PAGESIZE);
+	}
+}
 
 /**
  * Function to fix single dead object on the heap
@@ -543,6 +572,7 @@ MM_ParallelGlobalGC::mainThreadGarbageCollect(MM_EnvironmentBase *env, MM_Alloca
 	_extensions->freeOldHeapSizeOnLastGlobalGC = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
 #endif /* OMR_GC_MODRON_SCAVENGER */
 	
+	compressHeap(env);
 	/* Restart the allocation caches associated to all threads */
 	mainThreadRestartAllocationCaches(env);
 	
@@ -1897,3 +1927,4 @@ MM_ParallelGlobalGC::healHeap(MM_EnvironmentBase *env)
 	 */
 }
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
+

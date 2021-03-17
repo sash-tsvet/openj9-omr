@@ -34,6 +34,12 @@
 #include "Scavenger.hpp"
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <pthread.h>
+
+
 MM_GCExtensionsBase*
 MM_GCExtensionsBase::newInstance(MM_EnvironmentBase* env)
 {
@@ -92,6 +98,8 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 #error Default GC policy cannot be determined
 #endif /* OMR_GC_MODRON_STANDARD */
 
+	J9JavaVM *vm = NULL;
+	int maxTenureElements = 0;
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	if (!rememberedSet.initialize(env, OMR::GC::AllocationCategory::REMEMBERED_SET)) {
@@ -195,6 +203,15 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 	}
 #endif /* defined(OMR_GC_REALTIME) */
 
+	maxTenureElements = maxSizeDefaultMemorySpace/requestedPageSize;
+
+	vm = ((J9VMThread *) env)->javaVM;
+	vm->gcHappened = false;
+	vm->metadataTable = malloc(maxTenureElements * sizeof(bool));
+	vm->addressTable = malloc(maxTenureElements * sizeof(uintptr_t));
+	vm->wpTable = malloc(maxTenureElements * sizeof(pthread_mutex_t));
+	vm->PAGESIZE = requestedPageSize;
+	
 	return true;
 
 failed:

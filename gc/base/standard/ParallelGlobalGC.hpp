@@ -86,6 +86,10 @@ public:
  * Function members
  */
 private:
+	void compressPage (MM_EnvironmentBase *env, void* pageIterator, int pageNum, int PAGESIZE);
+
+	void compressHeap(MM_EnvironmentBase *env);
+	
 	/**
 	 *  main method to provide sweep
 	 */
