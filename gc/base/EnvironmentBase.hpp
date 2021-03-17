@@ -243,10 +243,10 @@ public:
 	 * @see preObjectMoveForCompact(omrobjectptr_t)
 	 */
 	MMINLINE void
-	postObjectMoveForCompact(omrobjectptr_t objectPtr)
+	postObjectMoveForCompact(omrobjectptr_t destinationObjectPtr, omrobjectptr_t objectPtr)
 	{
 #if defined(OMR_GC_DEFERRED_HASHCODE_INSERTION)
-		_delegate.postObjectMoveForCompact(objectPtr);
+		_delegate.postObjectMoveForCompact(destinationObjectPtr, objectPtr);
 #endif /* defined(OMR_GC_DEFERRED_HASHCODE_INSERTION) */
 	}
 

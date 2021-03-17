@@ -28,6 +28,7 @@
 
 class MM_GCExtensionsBase;
 class MM_MemorySubSpace;
+class MM_ForwardedHeader;
 
 class GC_ArrayletObjectModel
 {
@@ -59,6 +60,14 @@ public:
 
 	MMINLINE void
 	fixupDataAddr(omrobjectptr_t arrayPtr)
+	{
+#if defined(OMR_ENV_DATA64)
+		Assert_MM_unreachable();
+#endif /* defined(OMR_ENV_DATA64) */
+	}
+
+	MMINLINE void
+	fixupDataAddr(MM_ForwardedHeader *forwardedHeader, omrobjectptr_t arrayPtr)
 	{
 #if defined(OMR_ENV_DATA64)
 		Assert_MM_unreachable();
